@@ -104,7 +104,7 @@ def bisect_solve(args, f, xmin, xmax, rtol):
             err_hi = err_mid
     return mid_val
     
-def gas_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, r_w: float, r_ext: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, S: float = 0, D: float = 0, sg: float = 0.75, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0)-> np.ndarray:
+def gas_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, r_w: float, r_ext: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, S: float = 0, D: float = 0, sg: float = 0.75, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0) -> np.ndarray:
     """ Returns gas rate for radial flow (mscf/day) using Darcy pseudo steady state equation & gas pseudopressure
         k: Permeability (mD)
         h: Net flow height (ft)
@@ -134,7 +134,7 @@ def gas_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: 
     """
     k, h, pr, pwf = np.asarray(k), np.asarray(h), np.asarray(pr), np.asarray(pwf)
     zmethod, cmethod = validate_methods(['zmethod', 'cmethod'],[zmethod, cmethod])
-        
+
     tc, pc = gas_tc_pc(sg, n2, co2, h2s, cmethod.name, tc, pc)
 
     direction = 1
@@ -144,18 +144,17 @@ def gas_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: 
         delta_mp = abs(gas_dmp(p1=pwf, p2=pr, degf=degf, sg=sg, zmethod=zmethod, cmethod=cmethod, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s))
     else:
         if pr.size > 1: # Multiple Pr's
-            direction = np.array([p > pwf for p in pr])   
-            direction = 2*direction -1 
+            direction = np.array([p > pwf for p in pr])
             delta_mp = np.absolute(np.array([gas_dmp(p1=p, p2=pwf, degf=degf, sg=sg, zmethod=zmethod, cmethod=cmethod, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s)  for p in pr]))
-        else:           # Multiple BHFP's
-            direction = np.array([pr > bhfp for bhfp in pwf])   
-            direction = 2*direction -1  
+        else:   # Multiple BHFP's
+            direction = np.array([pr > bhfp for bhfp in pwf])
             delta_mp = np.absolute(np.array([gas_dmp(p1=pr, p2=bhfp, degf=degf, sg=sg, zmethod=zmethod, cmethod=cmethod, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s)  for bhfp in pwf]))
 
+        direction = 2*direction -1
     qg = darcy_gas(delta_mp, k, h, degf, r_w, r_ext, S, D, radial=True)
     return direction*qg
 
-def gas_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, area: npt.ArrayLike, length: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, sg: float = 0.75, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0)-> np.ndarray:
+def gas_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, area: npt.ArrayLike, length: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, sg: float = 0.75, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0) -> np.ndarray:
     """ Returns gas rate for linear flow (mscf/day) using Darcy steady state equation & gas pseudopressure
         k: Permeability (mD)
         pr: Reservoir pressure (psia)
@@ -181,9 +180,9 @@ def gas_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, are
     """
     k, area, pr, pwf = np.asarray(k), np.asarray(area), np.asarray(pr), np.asarray(pwf)
     zmethod, cmethod = validate_methods(['zmethod', 'cmethod'],[zmethod, cmethod])
-        
+
     tc, pc = gas_tc_pc(sg, n2, co2, h2s, cmethod.name, tc, pc)
-    
+
     direction = 1
     if pr.size + pwf.size == 2: # Single set of pressures
         if pr < pwf:
@@ -191,14 +190,13 @@ def gas_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, are
         delta_mp = abs(gas_dmp(p1=pwf, p2=pr, degf=degf, sg=sg, zmethod=zmethod, cmethod=cmethod, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s))
     else:
         if pr.size > 1:
-            direction = np.array([p > pwf for p in pr])   
-            direction = 2*direction -1 
+            direction = np.array([p > pwf for p in pr])
             delta_mp = np.absolute(np.array([gas_dmp(p1=p, p2=pwf, degf=degf, sg=sg, zmethod=zmethod, cmethod=cmethod, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s)  for p in pr]))
         else:
-            direction = np.array([pr > bhfp for bhfp in pwf])   
-            direction = 2*direction -1  
+            direction = np.array([pr > bhfp for bhfp in pwf])
             delta_mp = np.absolute(np.array([gas_dmp(p1=pr, p2=bhfp, degf=degf, sg=sg, zmethod=zmethod, cmethod=cmethod, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s)  for bhfp in pwf]))
 
+        direction = 2*direction -1
     qg = darcy_gas(delta_mp, k, 1, degf, area, length, 0, 0, radial=False)
     return direction*qg
 
@@ -243,11 +241,11 @@ def gas_tc_pc(sg: float, n2:float=0, co2:float=0, h2s:float=0, cmethod:str='PMC'
         k = beta[0] + (beta[4] * sg) + (beta[5] * sg * sg) #2.6
         jt = j
         kt = k
-        jt += sum([(alpha[i] * y[i] * tci[i] / pci[i]) for i in range(1,4)])
+        jt += sum(alpha[i] * y[i] * tci[i] / pci[i] for i in range(1,4))
         kt += sum((beta[i] * y[i] * tci[i] / np.sqrt(pci[i])) for i in range(1,4))
         tpc = kt * kt / jt #2.4
-        j += sum([alpha[i]*y[i]*tci[i]/pci[i] for i in range(1,4)])
-        k += sum([beta[i] * y[i] * tci[i] / np.sqrt(pci[i]) for i in range(1,4)])
+        j += sum(alpha[i]*y[i]*tci[i]/pci[i] for i in range(1,4))
+        k += sum(beta[i] * y[i] * tci[i] / np.sqrt(pci[i]) for i in range(1,4))
         ppc = (k * k / j) / j
 
     elif cmethod.name == 'SUT': # Sutton equations with Wichert & Aziz non-hydrocarbon corrections from monograph
@@ -263,7 +261,7 @@ def gas_tc_pc(sg: float, n2:float=0, co2:float=0, h2s:float=0, cmethod:str='PMC'
     else:
         print('Incorrect cmethod specified')
         sys.exit()
-    
+
     if tc > 0:
         tpc = tc
     if pc > 0:
@@ -321,8 +319,25 @@ def gas_z(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.D
         # sg relative to air, t in deg F, p in psia, n2, co2 and h2s in fractions (0-1)
         
         def Eq2p7(pr, tr, rhor, a):
-            z_calc = 1 + (a[1] + (a[2] / tr) + (a[3] / (tr * tr * tr)) + (a[4] / (tr * tr * tr * tr)) + (a[5] / np.power(tr, 5))) * rhor + ((a[6] + (a[7] / tr) + (a[8] / (tr * tr))) * rhor * rhor) - (a[9] * ((a[7] / tr) + (a[8] / (tr * tr))) * np.power(rhor, 5)) + (a[10] * (1 + (a[11] * rhor * rhor)) * (rhor * rhor / np.power(tr, 3)) * np.exp(-a[11] * rhor * rhor))
-            return z_calc
+            return (
+                1
+                + (
+                    a[1]
+                    + (a[2] / tr)
+                    + (a[3] / (tr * tr * tr))
+                    + (a[4] / (tr * tr * tr * tr))
+                    + (a[5] / np.power(tr, 5))
+                )
+                * rhor
+                + ((a[6] + (a[7] / tr) + (a[8] / (tr * tr))) * rhor * rhor)
+                - (a[9] * ((a[7] / tr) + (a[8] / (tr * tr))) * np.power(rhor, 5))
+                + (
+                    a[10]
+                    * (1 + (a[11] * rhor * rhor))
+                    * (rhor * rhor / np.power(tr, 3))
+                    * np.exp(-a[11] * rhor * rhor)
+                )
+            )
         
         zout = []
         single_p = False
@@ -450,7 +465,7 @@ def gas_ug(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.
     """ 
     p = np.asarray(p) 
     zmethod, cmethod = validate_methods(['zmethod', 'cmethod'],[zmethod, cmethod])
-              
+
     zee = gas_z(p=p, sg=sg, degf=degf, zmethod = zmethod, cmethod=cmethod, tc=tc, pc=pc, n2 = n2, co2 = co2, h2s = h2s)
     t = degf + 460
     m = 28.97 * sg
@@ -483,7 +498,7 @@ def gas_ugz(p: npt.ArrayLike, sg: float, degf: float, zee: npt.ArrayLike)-> np.n
     a = (9.379 + (0.01607 * m)) * np.power(t, 1.5) / (209.2 + (19.26 * m) + t) #2.15
     return a * 0.0001 * np.exp(b * np.power(rho, c))*zee # 2.14   
 
-def gas_cg(p: npt.ArrayLike, sg: float, degf: float, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0, cmethod: c_method=c_method.PMC)-> np.ndarray:
+def gas_cg(p: npt.ArrayLike, sg: float, degf: float, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0, cmethod: c_method=c_method.PMC) -> np.ndarray:
     """ Returns gas compressibility (1/psi) using the 'DAK' Dranchuk & Abou-Kassem (1975) Z-Factor &
         Critical property correlation values if not explicitly specified
         p: Gas pressure (psia)
@@ -504,7 +519,7 @@ def gas_cg(p: npt.ArrayLike, sg: float, degf: float, n2: float = 0, co2: float =
     pr = p / pc
     tr = (degf + 460) / tc
     zee = gas_z(p=p, degf=degf, sg=sg, tc=tc, pc=pc, n2 = n2, co2 = co2, h2s = h2s)
-    
+
     a = [0, 0.3265, -1.07, -0.5339, 0.01569, -0.05165, 0.5475, -0.7361, 0.1844, 0.1056, 0.6134, 0.7210]
     rhor = 0.27 * pr / (tr * zee)
     dzdrho = a[1] + (a[2] / tr) + (a[3] / (tr * tr * tr)) + (a[4] / (tr * tr * tr * tr)) + (a[5] / np.power(tr, 5))
@@ -512,8 +527,7 @@ def gas_cg(p: npt.ArrayLike, sg: float, degf: float, n2: float = 0, co2: float =
     dzdrho = dzdrho - (5 * np.power(rhor, 4) * a[9] * ((a[7] / tr) + (a[8] / (tr * tr))))
     dzdrho = dzdrho + (2 * a[10] * rhor / (tr * tr * tr)) * (1 + (a[11] * rhor * rhor) - (a[11] * a[11] * np.power(rhor, 4))) * np.exp(-a[11] * rhor * rhor) # 2.23
     cpr = (1 / pr) - ((0.27 / (zee * zee * tr)) * (dzdrho / (1 + (rhor / zee) * dzdrho))) # 2.22
-    cg = cpr / pc # 2.21
-    return cg
+    return cpr / pc
     
 def gas_bg(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0)-> np.ndarray:
     """ Returns Bg (gas formation volume factor) for natural gas (rcf/scf)
@@ -541,7 +555,7 @@ def gas_bg(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.
     zee = gas_z(p=p, degf=degf, sg=sg, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s, zmethod=zmethod, cmethod=cmethod)
     return (zee * (degf + 460) / (p * 35.37))
 
-def gas_den(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0)-> np.ndarray:
+def gas_den(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0) -> np.ndarray:
     """ Returns gas density for natural gas (lb/cuft)
         
           zmethod: Method for calculating Z-Factor
@@ -564,13 +578,12 @@ def gas_den(p: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method
     """
     p = np.asarray(p)
     zmethod, cmethod = validate_methods(['zmethod', 'cmethod'],[zmethod, cmethod])
-            
+
     zee = gas_z(p=p, degf=degf, sg=sg, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s, zmethod=zmethod, cmethod=cmethod)
     m = sg * 28.97
     t = degf + 460
     r = 10.732
-    rhog = p * m / (zee * r * t)
-    return rhog
+    return p * m / (zee * r * t)
 
 def gas_ponz2p(poverz: npt.ArrayLike, sg: float, degf: float, zmethod: z_method=z_method.DAK, cmethod: c_method=c_method.PMC, n2: float = 0, co2: float = 0, h2s: float = 0, tc: float = 0, pc: float = 0, rtol: float = 1E-7)-> np.ndarray:
     """ Returns pressure corresponding to a P/Z value for natural gas (psia)
@@ -650,11 +663,10 @@ def gas_grad2sg(grad: float, p: float, degf: float, zmethod: z_method=z_method.D
     def grad_err(args, sg):
         grad, p, zmethod, cmethod, tc, pc, n2, co2, h2s = args
         m = sg * 28.97
-        
+
         zee = gas_z(p=p, degf=degf, sg=sg, tc=tc, pc=pc, n2=n2, co2=co2, h2s=h2s, zmethod=zmethod, cmethod=cmethod)
         grad_calc = p * m / (zee * r * t)/144
-        error = (grad - grad_calc)/grad
-        return error
+        return (grad - grad_calc)/grad
     
     zmethod, cmethod = validate_methods(['zmethod', 'cmethod'],[zmethod, cmethod])
             
@@ -718,7 +730,7 @@ def gas_fws_sg(sg_g: float, cgr: float, api_st: float) -> float:
     fws_gas_mw = fws_gas_mass / fws_gas_moles        # lb/lb-moles
     return fws_gas_mw / 28.97
       
-def oil_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, r_w: float, r_ext: float, uo: float, bo: float, S: float=0, vogel: bool=False, pb: float=0)-> np.ndarray:
+def oil_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, r_w: float, r_ext: float, uo: float, bo: float, S: float=0, vogel: bool=False, pb: float=0) -> np.ndarray:
     """ Returns liquid rate for radial flow (stb/day) using Darcy pseudo steady state equation
         k: Effective Permeability to flow (mD)
         h: Net flow height (ft)
@@ -733,20 +745,18 @@ def oil_rate_radial(k: npt.ArrayLike, h: npt.ArrayLike, pr: npt.ArrayLike, pwf: 
         vogel: (True / False). Invokes the Vogel model that reduces inflow below bubble point pressure. Defaults to False if undefined
     """
     k, h, pr, pwf = np.asarray(k), np.asarray(h), np.asarray(pr), np.asarray(pwf)
-    
+
     if pwf.size > 1:
         pb = np.array([max(pb,pwf[i]) for i in range(pwf.size)])
-    
+
     J = 0.00708 * k * h / (uo * bo * (np.log(r_ext / r_w) + S - 0.75)) # Productivity index
     if not vogel:
-        qoil = J * (pr - pwf)
-    else:
-        qsat_max = J * pb / 1.8
-        qusat = J * (pr - pb)
-        qoil = qsat_max * (1 - 0.2 * (pwf / pb) - 0.8 * (pwf / pb) **2) + qusat
-    return qoil   
+        return J * (pr - pwf)
+    qsat_max = J * pb / 1.8
+    qusat = J * (pr - pb)
+    return qsat_max * (1 - 0.2 * (pwf / pb) - 0.8 * (pwf / pb) **2) + qusat   
 
-def oil_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, area: npt.ArrayLike, length: float, uo: float, bo: float, vogel: bool=False, pb: float=0)-> np.ndarray:
+def oil_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, area: npt.ArrayLike, length: float, uo: float, bo: float, vogel: bool=False, pb: float=0) -> np.ndarray:
     """ Returns liquid rate for linear flow (stb/day) using Darcy steady state equation
         k: Permeability (mD)
         Pr: Reservoir pressure (psia)
@@ -759,15 +769,13 @@ def oil_rate_linear(k: npt.ArrayLike, pr: npt.ArrayLike, pwf: npt.ArrayLike, are
         vogel: (True / False). Invokes the Vogel model that reduces inflow below bubble point pressure. Defaults to False if undefined
     """
     k, area, pr, pwf = np.asarray(k), np.asarray(area), np.asarray(pr), np.asarray(pwf)
-    
+
     J = 0.00708 * k * area / (2* np.pi * uo * bo * length) # Productivity index
     if not vogel:
-        qoil = J * (pr - pwf)
-    else:
-        qsat_max = J * pb / 1.8
-        qusat = J * (pr - pb)
-        qoil = qsat_max * (1 - 0.2 * (pwf / pb) - 0.8 * (pwf / pb) **2) + qusat
-    return qoil    
+        return J * (pr - pwf)
+    qsat_max = J * pb / 1.8
+    qusat = J * (pr - pb)
+    return qsat_max * (1 - 0.2 * (pwf / pb) - 0.8 * (pwf / pb) **2) + qusat    
     
 def oil_ja_sg(mw: float, ja: float) -> float:
     """ Returns liquid hydrocarbon specific gravity using Jacoby Aromaticity Factor relationship
@@ -816,29 +824,25 @@ def oil_twu_props(mw: float, ja: float = 0, sg: float = 0, damp: float = 1) -> t
         absx = abs(0.012342 - 0.328086 / tb ** 0.5) # Just above Eq 5.78
         dsgM = np.exp(5 * (sgp - sg)) - 1           # Modified Eq 5.78 to take into account damping
         fm = dsgM * (absx + (-0.0175691 + 0.193168 / tb ** 0.5) * dsgM)  # Just above Eq 5.78
-        M = np.exp(np.log(Mp) * (1 + 8 * damp * fm / (1 - 2 * fm) ** 2)) # Modified Eq 5.78 to take into account damping
-        return M
+        return np.exp(np.log(Mp) * (1 + 8 * damp * fm / (1 - 2 * fm) ** 2))
     
     def Twu_tc(tb, sgp, sg): 
         tcp = tb * (0.533272 + 0.000191017 * tb + 0.0000000779681 * tb ** 2 - 2.84376E-11 * tb ** 3 + 95.9468 / (0.01 * tb) ** 13) ** -1 # Eq 5.67
         dsgT = np.exp(5 * (sgp - sg)) - 1 # Eq 5.75
         ft = dsgT * ((-0.362456 / tb ** 0.5) + (0.0398285 - (0.948125 / tb ** 0.5)) * dsgT) # Eq 5.75
-        tc = tcp * ((1 + 2 * ft) / (1 - 2 * ft)) ** 2 # Eq 5.75
-        return tc
+        return tcp * ((1 + 2 * ft) / (1 - 2 * ft)) ** 2
     
     def Twu_vc(tb, tcp, sg, sgp):
         alpha = 1 - tb/tcp # Eq 5.72
         vcp = (1 - (0.419869 - 0.505839 * alpha - 1.56436 * alpha ** 3 - 9481.7 * alpha ** 14)) ** -8 # Eq 5.69
         dsgV = np.exp(4 * (sgp ** 2 - sg ** 2)) - 1 # Eq 5.76
         f_v = dsgV * ((0.46659 / tb ** 0.5) + (-0.182421 + (3.01721 / tb ** 0.5)) * dsgV)  # Eq 5.76
-        vc = vcp * ((1 + 2 * f_v) / (1 - 2 * f_v)) ** 2  # Eq 5.76
-        return vc
+        return vcp * ((1 + 2 * f_v) / (1 - 2 * f_v)) ** 2
     
     def Twu_pc(tb, sgp, sg, pcp, tc, tcp, vc, vcp):
         dsgp = np.exp(0.5 * (sgp - sg)) - 1 # Eq 5.77
         fp = dsgp * ((2.53262 - 46.1955 / tb ** 0.5 - 0.00127885 * tb) + (-11.4277 + 252.14 / tb ** 0.5 + 0.00230533 * tb) * dsgp) # Eq 5.77
-        pc = pcp * (tc / tcp) * (vcp / vc) * ((1 + 2 * fp) / (1 - 2 * fp)) ** 2 # Eq 5.77
-        return pc
+        return pcp * (tc / tcp) * (vcp / vc) * ((1 + 2 * fp) / (1 - 2 * fp)) ** 2
     
     def paraffin_props(Mp):
         theta = np.log(Mp) # Eq 5.73
@@ -866,7 +870,7 @@ def sg_evolved_gas(p: float, degf: float, rsb: float, api: float, sg_sp: float) 
         api: Stock tank oil density (API)
         sg_sp: Specific gravity of separator gas (relative to air)
     """
-        
+
     if p > 314.7: # Two different sets from original 1995 paper (not reflected in Correlations book)
         a = [0, -208.0797, 22885, -0.000063641, 3.38346, -0.000992, -0.000081147, -0.001956, 1.081956, 0.394035]
     else:
@@ -892,10 +896,9 @@ def sg_st_gas(psp: float, rsp: float, api: float, sg_sp: float, degf_sp: float) 
          [-1.1013, 0.1956, 1.818e-2, -957.38, 9.859e-4],
          [2.7735e-2, -3.4374e-2, -3.459e-4, 647.57, -6.312e-6],
          [3.2287e-3, 2.08e-3, 2.505e-6, -163.26, 1.4e-8]]
-    Zn = [sum([C[i][n]*var[n]**i for i in range(5)]) for n in range(5)]
+    Zn = [sum(C[i][n]*var[n]**i for i in range(5)) for n in range(5)]
     Z = sum(Zn)
-    sg_st = 1.219 + 0.198 * Z + 0.0845 * Z**2 + 0.03 * Z**3 + 0.003 * Z**4
-    return sg_st
+    return 1.219 + 0.198 * Z + 0.0845 * Z**2 + 0.03 * Z**3 + 0.003 * Z**4
     
 def sgg_wt_avg(sg_sp: float, rsp: float, sg_st: float, rst: float) -> float:
     """ Calculates weighted average specific gravity of surface gas (sg_g)
@@ -908,8 +911,7 @@ def sgg_wt_avg(sg_sp: float, rsp: float, sg_st: float, rst: float) -> float:
         sg_st: Stock tank gas specific gravity relative to air
         rst: Stock tank producing gas-oil ratio (scf/stb)
     """
-    sg_g = (sg_sp*rsp + sg_st*rst)/(rsp+rst)
-    return sg_g
+    return (sg_sp*rsp + sg_st*rst)/(rsp+rst)
 
 def oil_rs_st(psp: float, degf_sp: float, api: float) -> float:
     """ Estimates incremental gas evolved from separator liquid as it equilibrates to stock tank conditions (scf/stb)
@@ -927,7 +929,7 @@ def oil_rs_st(psp: float, degf_sp: float, api: float) -> float:
     C = [[-8.005, 1.224, -1.587], 
          [2.7, -0.5, 0.0441],
          [-0.161, 0, -2.29e-5]]
-    Zn = [sum([C[i][n]*var[n]**i for i in range(3)]) for n in range(3)]
+    Zn = [sum(C[i][n]*var[n]**i for i in range(3)) for n in range(3)]
     Z = sum(Zn)
     return max(0,3.955 + 0.83 * Z - 0.024 * Z**2 + 0.075 * Z**3)
     
@@ -971,15 +973,14 @@ def oil_pbub(api: float, degf: float, rsb: float, sg_g: float=0, sg_sp: float=0,
              [-0.0378, -0.0449, -10.84, 6.23e-3],
              [0.281, 4.36e-4, 8.39, -1.22e-5],
              [-0.0206, -4.76e-6, -2.34, 1.03e-8]]
-        Zn = [sum([C[i][n]*var[n]**i for i in range(4)]) for n in range(4)]
+        Zn = [sum(C[i][n]*var[n]**i for i in range(4)) for n in range(4)]
         Z = sum(Zn)
         lnpb = 7.475+0.713*Z + 0.0075*Z**2
         return np.exp(lnpb)
     
     def pbub_velarde(api, degf, sg_g, rsb, sg_sp) -> float: 
         x = 0.013098*degf**0.282372-8.2e-6*api**2.176124
-        pbp = 1091.47*(rsb**0.081465*sg_sp**-0.161488*10**x-0.740152)**5.354891
-        return pbp
+        return 1091.47*(rsb**0.081465*sg_sp**-0.161488*10**x-0.740152)**5.354891
     
     fn_dic = {'STAN': pbub_standing,
               'VALMC': pbub_valko_mccain,
@@ -1042,7 +1043,7 @@ def oil_rs_bub(api: float, degf: float, pb: float, sg_g: float=0, sg_sp: float=0
             old_err, old_rsb = new_err, new_rsb
 
             intcpt = new_err - error_slope*new_rsb
-            
+
             new_rsb = -intcpt / error_slope
             if i > 100: # At low rsb VALMC will not converge, use Velarde instead
                 return rsbub_velarde(api, degf, pb, sg_g, sg_sp)
@@ -1071,10 +1072,7 @@ def validate_methods(names, variables):
             except:
                 print('An incorrect method was specified')
                 sys.exit()
-    if len(variables)== 1:
-        return variables[0]
-    else:
-        return variables
+    return variables[0] if len(variables)== 1 else variables
 
 def oil_rs(api: float, degf: float, sg_sp: float, p: float, pb: float=0, rsb: float=0, rsmethod: rs_method=rs_method.VELAR, pbmethod: pb_method=pb_method.VALMC) -> float:
     """ Returns solution gas oil ratio (scf/stb) calculated from different correlations. Either pb, rsb or both need to be specified. 
@@ -1124,8 +1122,7 @@ def oil_rs(api: float, degf: float, sg_sp: float, p: float, pb: float=0, rsb: fl
         a = [x[0]*sg_sp**x[1]*api**x[2]*degf**x[3]*(pb-14.7)**x[4] for x in xs]
         pr = (p-14.7)/(pb-14.7)
         rsr = a[0]*pr**a[1]+(1-a[0])*pr**a[2]
-        rs = rsb * rsr
-        return rs
+        return rsb * rsr
     
     def rs_standing(api, degf, sg_sp, p, pb, rsb):
         a = 0.00091*degf - 0.0125*api # Eq 1.64
@@ -1201,8 +1198,18 @@ def oil_co(p: float, api: float,  degf: float, sg_sp: float=0, sg_g: float=0, pb
             else:
                 rs = oil_rs(api=api, degf=degf, sg_sp=sg_sp, p=p, pb=pb, rsb=rsb, rsmethod=rsmethod, pbmethod=pbmethod)
             sg_o = 141.4 / (api+131.5)
-            bo = oil_bo(p=p, pb=pb, degf=degf, rs=rs, rsb = rsb, sg_sp=sg_sp, sg_g=sg_g, sg_o=sg_o, bomethod=bomethod, denomethod=denomethod)
-            return bo
+            return oil_bo(
+                p=p,
+                pb=pb,
+                degf=degf,
+                rs=rs,
+                rsb=rsb,
+                sg_sp=sg_sp,
+                sg_g=sg_g,
+                sg_o=sg_o,
+                bomethod=bomethod,
+                denomethod=denomethod,
+            )
             
         def calc_drsdp(p):
             return oil_rs(api=api, degf=degf, sg_sp=sg_sp, p=p, pb=pb, rsb=rsb, rsmethod=rsmethod, pbmethod=pbmethod)
@@ -1270,26 +1277,25 @@ def oil_deno(p: float, degf:float, rs:float, rsb:float, sg_g: float = 0, sg_sp: 
         else:
             rhoa = 38.52*(10**(-0.00326*api))+(94.75-33.93*np.log10(api))*np.log10(sg_g)  # Eq 3.17e using sg_g. Apparent liquid density of surface gases
             rho_po = (rs*sg_g+4600*sg_o)/(73.71+rs*sg_g/rhoa) # pseudoliquid density, Eq 3.18b
-        
+
         drho_p = (0.167+16.181*10**(-0.0425*rho_po))*p/1000 - 0.01*(0.299+263*10**(-0.0603*rho_po))*(p/1000)**2 # Eq 3.19d
         rho_bs = rho_po + drho_p # fake density used in calculations, Eq 3.19e
         drho_t = (0.00302+1.505*rho_bs**-0.951)*(degf-60)**0.938-(0.0216-0.0233*10**(-0.0161*rho_bs))*(degf-60)**0.475 # Eq 3.19f
-        rho_or = rho_bs - drho_t # Eq 3.19g
-        return rho_or
+        return rho_bs - drho_t
     
     def Deno_p_gt_pb(p: float, degf: float, rs: float, rsb:float, sg_g: float, sg_sp: float, pb: float, sg_o: float, api:float) -> float:
         rhorb = Deno_standing_white_mccainhill(p=pb, degf=degf, rs=rs, rsb=rsb, sg_g=sg_g, sg_sp=sg_sp, pb=pb, sg_o=sg_o, api=api)
-        
+
         # cofb calculation from default compressibility algorithm Eq 3.13
         C = [[3.011, -0.0835, 3.51, 0.327, -1.918, 2.52],
              [-2.6254, -0.259, -0.0289, -0.608, -0.642, -2.73],
              [0.497, 0.382, -0.0584, 0.0911, 0.154, 0.429]]
         var = [np.log(api), np.log(sg_sp), np.log(pb), np.log(p/pb), np.log(rsb), np.log(degf)]
-        Zn = [sum([C[i][n]*var[n]**i for i in range(3)]) for n in range(6)]
+        Zn = [sum(C[i][n]*var[n]**i for i in range(3)) for n in range(6)]
         Zp = sum(Zn)
         ln_cofb_p = 2.434 + 0.475*Zp + 0.048*Zp**2 - np.log(10**6)
         cofb_p = np.exp(ln_cofb_p)
-        
+
         return rhorb * np.exp(cofb_p*(p-pb)) # Eq 3.20
     
              
@@ -1331,8 +1337,7 @@ def oil_bo(p:float, pb: float, degf: float, rs:float , rsb:float,sg_o:float, sg_
     denomethod, bomethod = validate_methods(['denomethod', 'bomethod'],[denomethod, bomethod])
     
     def Bo_standing(p, pb, degf, rs, rsb, sg_sp, sg_g, sg_o):
-        Bob = 0.972 + 1.47e-4*(rs*(sg_g/sg_o)**0.5+1.25*degf)**1.175
-        return Bob
+        return 0.972 + 1.47e-4*(rs*(sg_g/sg_o)**0.5+1.25*degf)**1.175
     
     def Bo_mccain(p, pb, degf, rs, rsb, sg_sp, sg_g, sg_o):
         rhor = oil_deno(p=p, degf=degf, rs=rs, rsb=rsb, sg_g=sg_g, sg_sp=sg_sp, pb=pb, sg_o=sg_o, denomethod=denomethod)
@@ -1360,17 +1365,15 @@ def oil_viso(p: float, api: float, degf: float, pb: float, rs: float) -> float:
         X = y*degf**-1.163
         A = 10.715*(rs+100)**-0.515
         B = 5.44*(rs+150)**-0.338
-        
-        uod = 10**X - 1 
-        uor = A*uod**B # Eq 3.23c
-        return uor
+
+        uod = 10**X - 1
+        return A*uod**B
     
     def uo_pf(p, api, degf, pb, rs):
         uob = uo_br(pb, api, degf, pb, rs)
         loguob = np.log(uob)
         A = -1.0146+1.3322*loguob-0.4876*loguob**2 - 1.15036*loguob**3 # Eq 3.24b
-        uor = uob + 1.3449e-3*(p-pb)*10**A # Eq 3.24a
-        return uor
+        return uob + 1.3449e-3*(p-pb)*10**A
         
     if p <= pb:
         return uo_br(p, api, degf, pb, rs)
